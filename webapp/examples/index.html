@@ -1,0 +1,416 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="../bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <title>iTracker|CSTI</title>
+    <link rel="stylesheet" href="../leaflet.css" />
+    <script src="../leaflet-src.js"></script>
+
+    <script src="../proj4.js"></script>
+
+    <script src="../jquery.min.js"></script>
+    <script src="../papaparse.min.js"></script>
+    <script src="../examples/js/popper.min.js"></script>
+
+    <style type="text/css">
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+        }
+
+        #map,
+        #container {
+            /*width: 98.5%;*/
+            height: 90%;
+            margin: 20px;
+        }
+
+        .confirmation {
+            display: none;
+            border-top: 1px solid gray;
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+
+<body>
+
+
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+
+
+            <a class="navbar-brand" href="#">iTracker</a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault"
+                aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarsExampleDefault">
+                <ul class="navbar-nav mr-auto">
+                    <li class="nav-item active">
+                        <a class="nav-link" href="#">Inicio <span class="sr-only">(current)</span></a>
+                    </li>
+                    <!--
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Demo</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link disabled" href="#" tabindex="-1" aria-disabled="true">Registro</a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="dropdown01" data-toggle="dropdown"
+                            aria-haspopup="true" aria-expanded="false">Servicios</a>
+                        <div class="dropdown-menu" aria-labelledby="dropdown01">
+                            <a class="dropdown-item" href="#">Action</a>
+                            <a class="dropdown-item" href="#">Another action</a>
+                            <a class="dropdown-item" href="#">Something else here</a>
+                        </div>
+                    </li>
+                    -->
+                </ul>
+                <!--
+                <form class="form-inline my-2 my-lg-0">
+                    <input class="form-control mr-sm-2" type="text" placeholder="Bucar" aria-label="Search">
+                    <button class="btn btn-secondary my-2 my-sm-0" type="submit">Buscar</button>
+                </form>
+            -->
+
+        </div>
+    </nav>
+
+    <main role="main" class="container">
+
+        <div cclass="container-fluid">
+        <!--<h1>iTracker Map</h1>-->
+
+
+
+            <!-- Modal -->
+<div class="modal fade" id="exampleModalLong" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">CARGA de CSV</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+                         <!--FORMULARIO CARGA SV-->
+        <div >
+
+                    <form class="csv-upload-form" id="csv-upload-form">
+                        <input type="file" id="csv-upload-input">
+                        <input type="submit" value="Cargar">
+                    </form>
+
+                    <div class="confirmation">
+                        <table>
+                            <tr>
+                                <td class="actual x">X:</td>
+                                <td class="from-file x" data-csv-column="x"></td>
+                                <td class="from-file-default x"><input name="default_x" /></td>
+                            </tr>
+                            <tr>
+                                <td class="actual y">Y:</td>
+                                <td class="from-file y" data-csv-column="y"></td>
+                                <td class="from-file-default y"><input name="default_y" /></td>
+                            </tr>
+                            <tr>
+                                <td class="actual zona">Zone</td>
+                                <td class="from-file zona" data-csv-column="zona"></td>
+                                <td class="from-file-default zona"><input name="default_zona" value="17" /></td>
+                            </tr>
+                            <tr>
+                                <td class="actual sur">Sur</td>
+                                <td class="from-file sur" data-csv-column="sur"></td>
+                                <td class="from-file-default sur"><input name="default_sur" value="true" /></td>
+                            </tr>
+                        </table>
+                    </div>
+                    </br>
+                    <button disabled="disabled" id="btn_procesar_puntos" type="button" data-dismiss="modal" class="btn btn-primary">Procesar</button>
+                    
+                    <br>
+                    <!--Resultado a Mostrar:-->
+                    <pre class="output"></pre>
+
+                    <!--FIN FORMULARIO CARGA SV-->
+                </div>
+        </div>
+      </div>
+      <!--
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary">Save changes</button>
+      </div>
+        -->
+    </div>
+  </div>
+</div>
+
+
+       
+
+
+
+    </main><!-- /.container -->
+
+
+    <!-- NAV  TOOLS MAP-->
+    <br>
+
+       <ul class="nav justify-content-end" style="margin:0 24px 5px 0;">
+        
+
+            
+            
+           <li class="nav-item">
+            
+            <button  id="btn_ver_mi_ubicacion" type="button" class="btn btn-success" style="font-size: 10px;">
+                <svg width="16px" height="16px" viewBox="0 0 22 22" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+                                <g id="Icons" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+                                    <g id="Rounded" transform="translate(-373.000000, -1793.000000)">
+                                        <g id="Device" transform="translate(100.000000, 1650.000000)">
+                                            <g id="-Round-/-Device-/-gps_fixed" transform="translate(272.000000, 142.000000)">
+                                                <g>
+                                                    <polygon id="Path" points="0 0 24 0 24 24 0 24"></polygon>
+                                                    <path d="M12,8 C9.79,8 8,9.79 8,12 C8,14.21 9.79,16 12,16 C14.21,16 16,14.21 16,12 C16,9.79 14.21,8 12,8 Z M20.94,11 C20.48,6.83 17.17,3.52 13,3.06 L13,2 C13,1.45 12.55,1 12,1 C11.45,1 11,1.45 11,2 L11,3.06 C6.83,3.52 3.52,6.83 3.06,11 L2,11 C1.45,11 1,11.45 1,12 C1,12.55 1.45,13 2,13 L3.06,13 C3.52,17.17 6.83,20.48 11,20.94 L11,22 C11,22.55 11.45,23 12,23 C12.55,23 13,22.55 13,22 L13,20.94 C17.17,20.48 20.48,17.17 20.94,13 L22,13 C22.55,13 23,12.55 23,12 C23,11.45 22.55,11 22,11 L20.94,11 Z M12,19 C8.13,19 5,15.87 5,12 C5,8.13 8.13,5 12,5 C15.87,5 19,8.13 19,12 C19,15.87 15.87,19 12,19 Z" id="🔹Icon-Color" fill="#FFFFFF"></path>
+                                                </g>
+                                            </g>
+                                        </g>
+                                    </g>
+                                </g>
+                            </svg>
+            Mi Ubicación</button>
+          </li>
+
+
+
+          <li class="nav-item">
+            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#exampleModalLong" style="font-size: 10px;">
+                <svg width="24px" height="16px" viewBox="0 -2 24 20" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+                <g id="Icons" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+                    <g id="Outlined" transform="translate(-270.000000, -2284.000000)">
+                        <g id="File" transform="translate(100.000000, 2226.000000)">
+                            <g id="Outlined-/-File-/-cloud_upload" transform="translate(170.000000, 54.000000)">
+                                <g>
+                                    <polygon id="Path" points="0 0 24 0 24 24 0 24"></polygon>
+                                    <path d="M19.35,10.04 C18.67,6.59 15.64,4 12,4 C9.11,4 6.6,5.64 5.35,8.04 C2.34,8.36 0,10.91 0,14 C0,17.31 2.69,20 6,20 L19,20 C21.76,20 24,17.76 24,15 C24,12.36 21.95,10.22 19.35,10.04 Z M19,18 L6,18 C3.79,18 2,16.21 2,14 C2,11.95 3.53,10.24 5.56,10.03 L6.63,9.92 L7.13,8.97 C8.08,7.14 9.94,6 12,6 C14.62,6 16.88,7.86 17.39,10.43 L17.69,11.93 L19.22,12.04 C20.78,12.14 22,13.45 22,15 C22,16.65 20.65,18 19,18 Z M8,13 L10.55,13 L10.55,16 L13.45,16 L13.45,13 L16,13 L12,9 L8,13 Z" id="🔹-Icon-Color" fill="#FFFFFF"></path>
+                                </g>
+                            </g>
+                        </g>
+                    </g>
+                </g>
+            </svg>
+                Cargar</button>
+          </li>
+
+          <li class="nav-item">
+            <button disabled="disabled" id="btn_proyectar_mi_ubicacion" type="button" class="btn btn-success" style="font-size: 10px;">
+
+                <svg width="16px" height="16px" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21.71,20.29,15.41,14H17a1,1,0,0,0,0-2H13.41l5.66-5.66a1,1,0,1,0-1.41-1.41L12,10.59V7a1,1,0,0,0-2,0V8.59L3.71,2.29A1,1,0,0,0,2.29,3.71L8.59,10H7a1,1,0,0,0,0,2h3.59L4.93,17.66a1,1,0,0,0,0,1.41,1,1,0,0,0,1.41,0L12,13.41V17a1,1,0,0,0,2,0V15.41l6.29,6.3a1,1,0,0,0,1.42,0A1,1,0,0,0,21.71,20.29Z" fill="#FFFFFF"/></svg>
+
+                Proyección</button>
+          </li>
+          <!--
+            <li class="nav-item">
+                <a class="nav-link" href="#">Link</a>
+            </li>
+            -->
+        </ul>
+
+    <!--MAPA-->
+
+    <textarea style="display: none;" id="opts">{}</textarea>
+    <!--<div id="res"></div>-->
+    <div id="map" style="position: relative; margin:0 2em 2em 2em;"></div>
+
+    <!--FIN MAPA-->
+
+    <div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header">
+    
+          <strong class="mr-auto">Error con el GPS</strong>
+          <small class="text-muted">hace 2 segundos...</small>
+          <button type="button" class="ml-2 mb-1 close" data-dismiss="toast" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+        </div>
+        <div class="toast-body">
+          No se ha podido cargar la ubicación actual.
+        </div>
+      </div>
+
+
+    <script src="../L.LatLng.UTM.js"></script>
+
+    <script type="text/javascript">
+        var center = [37.056019, -3.365688];
+        var detectedLocations=[];
+        var current_ll;
+        var levelZoom=16;
+        var options = {
+            attribution:
+                '<a href="https://csticorp.biz"</a> &copy; ' +
+                'CSTICorp',
+            subdomains: 'abc',
+            minZoom: 0,
+            maxZoom: 20
+        };
+
+        var osm = L.tileLayer('//{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', options);
+
+        var map = L.map('map', {
+            layers: [osm],
+            center: center,
+            zoom: 14
+        });
+        
+        var geoLocationOptions = {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0
+        }
+
+        
+
+        function onLocationFound(e) {
+
+            var radius = e.accuracy / 2;
+            current_ll=e.latlng;
+            var mark=new L.Marker(e.latlng,{ draggable: false }).addTo(map);
+            mark.bindPopup(e.latlng+" - Precisión: " + radius + " metros").openPopup();
+            var circ=new L.Circle(e.latlng, radius).addTo(map);
+
+            var objLoc={};
+            objLoc.marker=mark;
+            objLoc.circle=circ;
+            
+
+            for(var i=0; i<detectedLocations.length;i++){
+                map.removeLayer(detectedLocations[i].marker);    
+                map.removeLayer(detectedLocations[i].circle);    
+            }
+            
+
+            detectedLocations.push(objLoc);
+            console.info(objLoc);
+
+            //var marker = new L.Marker(ll, { draggable: false }).addTo(map);
+        }
+
+        function onLocationError(e) {
+            console.error(e.message);
+            
+
+        }
+
+        map.on('locationfound', onLocationFound);
+        map.on('locationerror', onLocationError);
+
+        map.locate({ setView: false, maxZoom: 16 });
+        //map.setView(current_ll,levelZoom);
+
+        var locate= function(){
+            try{
+                zoom=map.getZoom();
+            }
+            catch(e){
+                zoom=levelZoom;
+            }
+            console.info("consulting position...");
+            //navigator.geolocation.getCurrentPosition(onLocationFound, onLocationError, geoLocationOptions);
+            //map.locate({ setView: false, maxZoom: zoom });
+            map.locate();
+            setTimeout(locate,10000);
+        }
+
+        setTimeout(locate,10000);
+
+
+        var fun = function (t,item) {
+            var opts = document.getElementById('opts').value;
+            var opt = JSON.parse(opts)
+            //t.bindPopup(t.getLatLng().utm().toString(opt), { autoClose: false }).openPopup();
+            if(item){
+                t.bindPopup(JSON.stringify(item.all,null,5), { autoClose: true }).openPopup();
+            }else{
+                t.bindPopup(t.getLatLng().utm().toString(opt), { autoClose: true }).openPopup();
+            }
+            // update last point info
+
+            var p = t.getLatLng();
+            var o = t.getLatLng().utm();
+            var other = o.latLng();
+
+            var txt = '';
+            txt += 'Original: ' + p.toString(10) + '<br>';
+            txt += 'UTM-latLng: ' + other.toString(10) + '<br>';
+            txt += 'UTM: ' + p.utm().toString(opt) + '<br>';
+            txt += 'stringify: ' + JSON.stringify(o) + '<br>';
+            txt += 'Original == UTM-latLng: ' + p.equals(other) + '<br>';
+
+            // for proj4
+            var utm = '+proj=utm +zone=' + o.zone + (o.southHemi ? '+south' : '');
+            var wgs84 = '+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs';
+            var pj = proj4(wgs84, utm, [t.getLatLng().lng, t.getLatLng().lat]);
+            txt += 'proj4: ' + pj[0] + ', ' + pj[1] + '<br>';
+            var margin = Math.max(Math.abs(o.x - pj[0]), Math.abs(o.y - pj[1]));
+            txt += 'proj4 == UTM (< 0.001): ' + (margin < 0.001) + ' | err: ' + margin;
+            //document.getElementById('res').innerHTML = txt;
+        };
+
+        var create = function (ll,item) {
+            var marker = new L.Marker(ll, { draggable: false }).addTo(map);
+            marker.on('dblclick', function (e) {
+                map.removeLayer(marker);
+            });
+            map.closePopup();
+
+            marker.on('dragend', function (e) {
+                //fun(e.target);
+            });
+            fun(marker,item);
+            
+
+            try{
+            levelZoom=map.getZoom();
+            }catch(e){}
+            map.setView(ll,levelZoom);
+        }
+        //create(center);
+
+        map.on('click', function (e) {
+            //create(e.latlng);
+        });
+
+        //SETEAR PUNTO CAYALTI
+        /*
+        var point = { x: 658587.5805, y: 9237710.8834, zone: "17", band: "", sur: true };
+        var utm = L.utm(point.x, point.y, point.zone, point.band, point.sur);
+        var ll = utm.latLng();
+        create(ll);
+        console.info("ll:",ll);
+        */
+    </script>
+
+    <script src="js/script.js"></script>
+
+</body>
+
+
+<!--<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>-->
+
+<script>window.jQuery || document.write('<script src="../bootstrap/js/jquery.slim.min.js"><\/script>')</script>
+<script src="../bootstrap/js/bootstrap.bundle.min.js"></script>
+
+
+
+</html>
